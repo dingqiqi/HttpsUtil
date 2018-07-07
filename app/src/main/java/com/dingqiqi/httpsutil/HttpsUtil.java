@@ -96,9 +96,8 @@ public class HttpsUtil {
         return HttpsUtilInstance.mInstance;
     }
 
-    public HttpsUtil setTLVVersion(String mTLVVersion) {
-        SSLFactory.setTLVVersion(mTLVVersion);
-
+    public HttpsUtil setTLSVersion(String mTLSVersion) {
+        SSLFactory.setTLSVersion(mTLSVersion);
         return HttpsUtilInstance.mInstance;
     }
 

@@ -25,7 +25,7 @@ final class SSLFactory {
 
     private static String mTrustStoreType = "bks";
 
-    private static String mTLVVersion = "TLSv1";
+    private static String mTLSVersion = "TLSv1";
 
     static void setKeyStoreType(String mKeyStoreType) {
         SSLFactory.mKeyStoreType = mKeyStoreType;
@@ -35,8 +35,8 @@ final class SSLFactory {
         SSLFactory.mTrustStoreType = mTrustStoreType;
     }
 
-    static void setTLVVersion(String mTLVVersion) {
-        SSLFactory.mTLVVersion = mTLVVersion;
+    static void setTLSVersion(String mTLVVersion) {
+        SSLFactory.mTLSVersion = mTLVVersion;
     }
 
     static SSLSocketFactory getSocketFactory(InputStream ksIn, InputStream tsIn, String clientPsw, String servicePsw) {
@@ -64,7 +64,7 @@ final class SSLFactory {
             }
 
             //初始化SSLContext
-            SSLContext sslContext = SSLContext.getInstance(mTLVVersion);
+            SSLContext sslContext = SSLContext.getInstance(mTLSVersion);
 
             KeyManagerFactory keyManagerFactory = null;
 
