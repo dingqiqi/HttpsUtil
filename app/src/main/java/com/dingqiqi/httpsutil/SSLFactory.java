@@ -1,4 +1,4 @@
-package com.dingqiqi.https;
+package com.dingqiqi.httpsutil;
 
 import java.io.InputStream;
 import java.security.KeyStore;

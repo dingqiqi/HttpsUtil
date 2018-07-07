@@ -1,4 +1,4 @@
-package com.dingqiqi.https;
+package com.dingqiqi.httpsutil;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
