@@ -1,6 +1,6 @@
 # HttpsUtil
 
-[![](https://jitpack.io/#dingqiqi/HttpsUtil.svg)](https://jitpack.io/#dingqiqi/HttpsUtil)
+[![](https://jitpack.io/v/dingqiqi/HttpsUtil.svg)](https://jitpack.io/#dingqiqi/HttpsUtil)
 
 一个Https封装库
 
