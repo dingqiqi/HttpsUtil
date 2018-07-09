@@ -1,5 +1,7 @@
 # HttpsUtil
 
+[![](https://jitpack.io/#dingqiqi/HttpsUtil.svg)](https://jitpack.io/#dingqiqi/HttpsUtil)
+
 一个Https封装库
 
 包含忽略认证以及Https双向认证
