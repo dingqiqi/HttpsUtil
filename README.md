@@ -21,7 +21,7 @@ allprojects {
 
 dependencies {
 
-    compile 'com.github.dingqiqi:HttpsUtil:(https://jitpack.io/#dingqiqi/HttpsUtil)'
+    compile 'com.github.dingqiqi:HttpsUtil:v1.5'
     
 }
 
