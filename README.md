@@ -1,6 +1,6 @@
 # HttpsUtil
 
-[![](https://jitpack.io/v/dingqiqi/HttpsUtil.svg)](https://jitpack.io/#dingqiqi/HttpsUtil)
+最新版本:[![](https://jitpack.io/v/dingqiqi/HttpsUtil.svg)](https://jitpack.io/#dingqiqi/HttpsUtil)
 
 一个Https封装库
 
@@ -21,37 +21,36 @@ allprojects {
 
 dependencies {
 
-    compile 'com.github.dingqiqi:HttpsUtil:v1.4'
+    compile 'com.github.dingqiqi:HttpsUtil:(https://jitpack.io/#dingqiqi/HttpsUtil)'
     
 }
 
   使用方式
 
-  //设置TLS版本
-
-  HttpsUtil.getInstance().setTLSVersion("TLSv1");
-
-
-  //设置客户端信任证书类型 （括号就是默认的类型）
-  
-  HttpsUtil.getInstance().setKeyStoreType("PKCS12");
-
-  //设置服务端信任证书类型 （括号里的值就是默认的类型）
-  
-  HttpsUtil.getInstance().setTrustStoreType("bks");
-
   //获取信任全部的Https 的SSLSocketFactory
   
   SSLSocketFactory SSLSocketFactory = HttpsUtil.getInstance().getSocketFactory();
 
-  //双向认证
+  //双向认证 服务端公钥转成的bks私钥
   try {
   
-      InputStream inks = getAssets().open("client.p12");
+      InputStream ksIn = getAssets().open("client.p12");
       
-      InputStream ints = getAssets().open("service.bks");
+      InputStream tsIn = getAssets().open("service.bks");
 
-      HttpsUtil.getInstance().getSocketFactory(inks,ints,"123456","123456");
+      HttpsUtil.getInstance().getSocketFactory(ksIn,"123456",tsIn,"123456");
+      
+  } catch (IOException e) {
+      e.printStackTrace();
+  }
+
+  //双向认证 服务端公钥
+  try {
+      InputStream ksIn = getAssets().open("client.p12");
+      
+      InputStream tsIn = getAssets().open("service.cer");
+
+      HttpsUtil.getInstance().getSocketFactory(ksIn,"123456",tsIn,null);
       
   } catch (IOException e) {
       e.printStackTrace();
