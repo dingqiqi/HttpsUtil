@@ -1,9 +1,13 @@
 package com.dingqiqi.httpsutil;
 
+import android.annotation.SuppressLint;
+import android.text.TextUtils;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.SecureRandom;
-import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.KeyManager;
@@ -21,92 +25,36 @@ import javax.net.ssl.X509TrustManager;
 
 final class SSLFactory {
 
-    private static String mKeyStoreType = "PKCS12";
-
-    private static String mTrustStoreType = "bks";
-
-    private static String mTLSVersion = "TLSv1";
-
-    static void setKeyStoreType(String mKeyStoreType) {
-        SSLFactory.mKeyStoreType = mKeyStoreType;
-    }
-
-    static void setTrustStoreType(String mTrustStoreType) {
-        SSLFactory.mTrustStoreType = mTrustStoreType;
-    }
-
-    static void setTLSVersion(String mTLVVersion) {
-        SSLFactory.mTLSVersion = mTLVVersion;
-    }
-
-    static SSLSocketFactory getSocketFactory(InputStream ksIn, InputStream tsIn, String clientPsw, String servicePsw) {
-
+    /**
+     * SSLSocketFactory 信任全部https
+     *
+     * @return SSLSocketFactory
+     */
+    @SuppressLint("TrustAllX509TrustManager")
+    public static SSLSocketFactory getSocketFactory() {
         SSLSocketFactory sslSocketFactory = null;
-
-        KeyStore keyStore = null;
-        KeyStore trustStore = null;
-
         try {
-            // 服务器端需要验证的客户端证书，其实就是客户端的keystore
-            if (ksIn != null) {
-                keyStore = KeyStore.getInstance(mKeyStoreType);
-                //加载客户端公钥证书
-                keyStore.load(ksIn, clientPsw.toCharArray());
-                ksIn.close();
-            }
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.1");
 
-            if (tsIn != null) {
-                // 客户端信任的服务器端证书
-                trustStore = KeyStore.getInstance(mTrustStoreType);
-                //加载服务端端私钥证书
-                trustStore.load(tsIn, servicePsw.toCharArray());
-                tsIn.close();
-            }
+            TrustManager[] trustManagers = new TrustManager[]{new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType) {
+
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType) {
+
+                }
+
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
+                }
+            }};
 
             //初始化SSLContext
-            SSLContext sslContext = SSLContext.getInstance(mTLSVersion);
-
-            KeyManagerFactory keyManagerFactory = null;
-
-            if (keyStore != null) {
-                keyManagerFactory = KeyManagerFactory.getInstance("X509");
-                keyManagerFactory.init(keyStore, clientPsw.toCharArray());
-            }
-
-            TrustManagerFactory trustManagerFactory = null;
-            if (trustStore != null) {
-                trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-                trustManagerFactory.init(trustStore);
-            }
-
-            KeyManager[] KeyManagers = null;
-            if (keyManagerFactory != null) {
-                KeyManagers = keyManagerFactory.getKeyManagers();
-            }
-
-            TrustManager[] trustManager;
-            if (trustManagerFactory != null) {
-                trustManager = trustManagerFactory.getTrustManagers();
-            } else {
-                trustManager = new TrustManager[]{new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-
-                    }
-
-                    @Override
-                    public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-
-                    }
-
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
-                }};
-            }
-
-            sslContext.init(KeyManagers, trustManager, new SecureRandom());
+            sslContext.init(null, trustManagers, new SecureRandom());
 
             sslSocketFactory = sslContext.getSocketFactory();
         } catch (Exception e) {
@@ -114,6 +62,149 @@ final class SSLFactory {
         }
 
         return sslSocketFactory;
+    }
+
+
+    /**
+     * SSLSocketFactory 客户端私钥  服务端公钥
+     *
+     * @param ksIn  客户端私钥流
+     * @param ksPsw 私钥密码
+     * @param tsIn  服务端公钥
+     * @return SSLSocketFactory
+     */
+    public static SSLSocketFactory getSocketFactory(InputStream ksIn, String ksPsw, InputStream tsIn) {
+        return getSocketFactory(ksIn, ksPsw, tsIn, null);
+    }
+
+    /**
+     * SSLSocketFactory 客户端私钥  服务端私钥
+     *
+     * @param ksIn  客户端私钥流
+     * @param ksPsw 私钥密码
+     * @param tsIn  服务端私钥(由公钥转的)
+     * @param tsPsw 服务端私钥密码
+     * @return SSLSocketFactory
+     */
+    public static SSLSocketFactory getSocketFactory(InputStream ksIn, String ksPsw, InputStream tsIn, String tsPsw) {
+        SSLSocketFactory sslSocketFactory = null;
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLSv1.1");
+
+            TrustManager[] trustManagers;
+
+            if (TextUtils.isEmpty(tsPsw)) {
+                trustManagers = createTrustManager(tsIn);
+            } else {
+                trustManagers = createTrustManager(tsIn, tsPsw);
+            }
+
+            //初始化SSLContext
+            sslContext.init(createKeyManagers(ksIn, ksPsw), trustManagers, new SecureRandom());
+
+            sslSocketFactory = sslContext.getSocketFactory();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return sslSocketFactory;
+    }
+
+    /**
+     * 加载客户端私钥
+     *
+     * @param ksInputStream 私钥文件流
+     * @param psw           密码
+     * @return KeyManager
+     */
+    private static KeyManager[] createKeyManagers(InputStream ksInputStream, String psw) {
+        char[] pswChars = psw.toCharArray();
+        try {
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+
+            keyStore.load(ksInputStream, pswChars);
+
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("X509");
+
+            keyManagerFactory.init(keyStore, pswChars);
+
+            return keyManagerFactory.getKeyManagers();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                ksInputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 加载服务端公钥
+     *
+     * @param tsInputStream 公钥流
+     * @return TrustManager
+     */
+    private static TrustManager[] createTrustManager(InputStream tsInputStream) {
+        try {
+            CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
+
+            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            //加载客户端公钥证书
+            trustStore.load(null);
+
+            trustStore.setCertificateEntry("0", certificateFactory.generateCertificate(tsInputStream));
+
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+            trustManagerFactory.init(trustStore);
+
+            return trustManagerFactory.getTrustManagers();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                tsInputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 加载服务端密钥 (公钥转私钥,常用bks格式)
+     *
+     * @param tsInputStream 公钥流
+     * @param psw           密码
+     * @return TrustManager
+     */
+    private static TrustManager[] createTrustManager(InputStream tsInputStream, String psw) {
+        try {
+            KeyStore trustStore = KeyStore.getInstance("bks");
+
+            trustStore.load(tsInputStream, psw.toCharArray());
+
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+
+            trustManagerFactory.init(trustStore);
+
+            return trustManagerFactory.getTrustManagers();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                tsInputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
     }
 
 }

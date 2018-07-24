@@ -19,86 +19,47 @@ public class HttpsUtil {
     }
 
     /**
+     * 信任全部Https请求
+     *
      * @return SSLSocketFactory
      */
     public SSLSocketFactory getSocketFactory() {
-
-        return getSocketFactory(null, null, null, null);
+        return SSLFactory.getSocketFactory();
     }
 
     /**
-     * @param clientKey     服务器端需要验证的客户端证书，其实就是客户端的keystore
-     * @param trustStoreKey 客户端信任的服务器端证书
-     * @param clientPsw     客户端的keystore密码
-     * @param trustStorePsw 服务端证书密码
+     * @param ksKey 客户端私钥
+     * @param ksPsw 客户端私钥密码
+     * @param tsKey 服务端公钥(或者转成bks格式私钥)
+     * @param tsPsw cer公钥传null(服务端私钥证书密码)
      * @return SSLSocketFactory
      */
-    public SSLSocketFactory getSocketFactoryForByte(byte[] clientKey, byte[] trustStoreKey,
-                                                    String clientPsw, String trustStorePsw) {
-        ByteArrayInputStream clientInput = null;
-        if (clientKey != null) {
-            clientInput = new ByteArrayInputStream(clientKey);
+    public SSLSocketFactory getSocketFactoryForByte(byte[] ksKey, String ksPsw, byte[] tsKey, String tsPsw) {
+        ByteArrayInputStream ksIn = null;
+        if (ksKey != null) {
+            ksIn = new ByteArrayInputStream(ksKey);
         }
 
-        ByteArrayInputStream trustStoreInput = null;
-        if (trustStoreKey != null) {
-            trustStoreInput = new ByteArrayInputStream(trustStoreKey);
+        ByteArrayInputStream tsIn = null;
+        if (tsKey != null) {
+            tsIn = new ByteArrayInputStream(tsKey);
         }
 
-        return getSocketFactory(clientInput, trustStoreInput, clientPsw, trustStorePsw);
+        return getSocketFactory(ksIn, ksPsw, tsIn, tsPsw);
     }
 
     /**
-     * @param clientKey     服务器端需要验证的客户端证书，其实就是客户端的keystore
-     * @param trustStoreKey 客户端信任的服务器端证书
-     * @param clientPsw     客户端的keystore密码
-     * @param trustStorePsw 服务端证书密码
+     * @param ksIn  客户端私钥
+     * @param ksPsw 私钥密码
+     * @param tsIn  服务端公钥或者转成bks格式的私钥
+     * @param tsPsw cer公钥传null(私钥证书密码)
      * @return SSLSocketFactory
      */
-    public SSLSocketFactory getSocketFactoryForString(String clientKey, String trustStoreKey,
-                                                      String clientPsw, String trustStorePsw) {
-        ByteArrayInputStream clientInput = null;
-        if (clientKey != null) {
-            clientInput = new ByteArrayInputStream(clientKey.getBytes());
-        }
-
-        ByteArrayInputStream trustStoreInput = null;
-        if (trustStoreKey != null) {
-            trustStoreInput = new ByteArrayInputStream(trustStoreKey.getBytes());
-        }
-
-        return getSocketFactory(clientInput, trustStoreInput, clientPsw, trustStorePsw);
+    public SSLSocketFactory getSocketFactory(InputStream ksIn, String ksPsw, InputStream tsIn,
+                                             String tsPsw) {
+        return SSLFactory.getSocketFactory(ksIn, ksPsw,
+                tsIn, tsPsw);
     }
 
-    /**
-     * @param clientInput     服务器端需要验证的客户端证书，其实就是客户端的keystore
-     * @param trustStoreInput 客户端信任的服务器端证书
-     * @param clientPsw       客户端的keystore密码
-     * @param trustStorePsw   服务端证书密码
-     * @return SSLSocketFactory
-     */
-    public SSLSocketFactory getSocketFactory(InputStream clientInput, InputStream trustStoreInput,
-                                             String clientPsw, String trustStorePsw) {
-        return SSLFactory.getSocketFactory(clientInput, trustStoreInput,
-                clientPsw, trustStorePsw);
-    }
-
-
-    public HttpsUtil setKeyStoreType(String mKeyStoreType) {
-        SSLFactory.setKeyStoreType(mKeyStoreType);
-
-        return HttpsUtilInstance.mInstance;
-    }
-
-    public HttpsUtil setTrustStoreType(String mTrustStoreType) {
-        SSLFactory.setTrustStoreType(mTrustStoreType);
-
-        return HttpsUtilInstance.mInstance;
-    }
-
-    public HttpsUtil setTLSVersion(String mTLSVersion) {
-        SSLFactory.setTLSVersion(mTLSVersion);
-        return HttpsUtilInstance.mInstance;
-    }
 
 }
